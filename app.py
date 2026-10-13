@@ -2,10 +2,7 @@
 Marketing Campaign Effectiveness Analysis — Interactive ROI Decision-Support System
 Prototype for College Research Project & Multi-Touch Attribution Engine
 Author: Analytics Research Team
-Design: Luminous Light Executive BI Theme (Teal & Slate Accents)
-Data Modes:
-  1. Empirical Multi-Scenario Benchmark (E-Commerce B2C, B2B SaaS, EdTech)
-  2. External CSV Upload with Automated Schema Validation & Template Downloader
+Design: Premium Executive Light Theme (Inter Font, Slate & Teal Accents)
 Optimizers: Scipy SLSQP Constrained Non-Linear Solver
 """
 
@@ -19,7 +16,7 @@ from scipy.optimize import minimize
 import streamlit as st
 
 # ==============================================================================
-# 1. APPLICATION CONFIGURATION & LIGHT DESIGN SYSTEM
+# 1. APPLICATION CONFIGURATION & PREMIUM LIGHT DESIGN SYSTEM
 # ==============================================================================
 st.set_page_config(
     page_title="Marketing Campaign Effectiveness Analysis — Interactive ROI Decision-Support System",
@@ -28,151 +25,192 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Lighter, modern executive color palette
-COLOR_PRIMARY = "#0F172A"       # Crisp slate-900 for primary typography
-COLOR_SECONDARY = "#0D9488"     # Fresh teal-600 for positive accents & AI cards
-COLOR_ACCENT_BLUE = "#0284C7"   # Sky/ocean blue
-COLOR_MUTED_GREY = "#64748B"    # Slate-500 neutral text
-COLOR_LIGHT_BG = "#F8FAFC"      # Soft airy slate-50 background
-COLOR_CARD_BG = "#FFFFFF"       # Crisp white card background
-COLOR_BORDER = "#E2E8F0"        # Subtle slate-200 border line
-COLOR_GRID = "#F1F5F9"          # Light chart gridline
-COLOR_TEXT = "#0F172A"          # Dark slate text
-COLOR_SUCCESS = "#10B981"       # Fresh emerald
-COLOR_WARNING = "#F59E0B"       # Warm amber
+# Executive Color Palette Tokens
+COLOR_PRIMARY = "#0F172A"       # Deep Slate 900
+COLOR_SECONDARY = "#0D9488"     # Teal 600
+COLOR_MUTED_GREY = "#64748B"    # Slate 500
+COLOR_LIGHT_BG = "#F8FAFC"      # Slate 50
+COLOR_CARD_BG = "#FFFFFF"       # Pure Card White
+COLOR_BORDER = "#E2E8F0"        # Slate 200
+COLOR_GRID = "#F1F5F9"          # Slate 100
 
 
 def apply_custom_styles():
-    """Apply luminous, modern executive light-theme styling."""
+    """Apply premium executive light BI theme with flawless alignments and zero clashing colors."""
     st.markdown(
-        f"""
+        """
         <style>
-            /* Base layout & typography */
-            .main .block-container {{
-                padding-top: 1.25rem;
-                padding-bottom: 3.5rem;
-                max-width: 1340px;
-            }}
+            /* Base layout & viewport clearance */
+            .main .block-container {
+                padding-top: 4.5rem !important;
+                padding-bottom: 3.5rem !important;
+                max-width: 1360px;
+            }
             
-            /* Clean light page background */
-            .stApp {{
-                background-color: #F8FAFC;
-                color: #0F172A;
-            }}
+            /* Clean transparent header */
+            header[data-testid="stHeader"] {
+                background: rgba(248, 250, 252, 0.85) !important;
+                backdrop-filter: blur(8px) !important;
+                border-bottom: 1px solid #E2E8F0;
+            }
             
-            /* Light clean containers & cards */
-            div[data-testid="stVerticalBlockBorderWrapper"] {{
+            /* Background */
+            .stApp {
+                background-color: #F8FAFC !important;
+                color: #0F172A !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }
+            
+            /* White card containers with crisp subtle border */
+            div[data-testid="stVerticalBlockBorderWrapper"] {
                 background-color: #FFFFFF !important;
-                border-radius: 8px !important;
+                border-radius: 10px !important;
                 border: 1px solid #E2E8F0 !important;
-                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
-            }}
+                box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02) !important;
+                padding: 0.2rem !important;
+            }
 
-            /* Headers */
-            h1, h2, h3, h4 {{
-                color: #0F172A;
+            /* Clean headers */
+            h1, h2, h3, h4 {
+                color: #0F172A !important;
                 font-weight: 600 !important;
-                letter-spacing: -0.02em;
-            }}
+                letter-spacing: -0.025em;
+            }
             
-            /* Subtitle & disclaimer badge */
-            .app-header-title {{
-                font-size: 1.65rem;
-                font-weight: 700;
-                color: #0F172A;
-                margin-bottom: 0.2rem;
-            }}
-            
-            .app-header-subtitle {{
-                font-size: 0.92rem;
-                color: #64748B;
-                margin-bottom: 1.15rem;
-            }}
-            
-            .badge-source {{
-                display: inline-block;
-                background-color: #F1F5F9;
-                color: #334155;
-                font-size: 0.72rem;
-                font-weight: 600;
-                padding: 3px 9px;
-                border-radius: 4px;
-                border: 1px solid #CBD5E1;
-                vertical-align: middle;
-                margin-left: 8px;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-            }}
-            
-            .badge-active {{
-                background-color: #E6FFFA;
+            /* Subtitle & badge styling */
+            .badge-source {
+                display: inline-flex;
+                align-items: center;
+                background-color: #F0FDFA;
                 color: #0D9488;
-                border-color: #99F6E4;
-            }}
+                font-size: 0.74rem;
+                font-weight: 600;
+                padding: 3px 10px;
+                border-radius: 9999px;
+                border: 1px solid #99F6E4;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+            }
             
-            /* Recommendation card: light, soft mint gradient */
-            .recommendation-card {{
+            /* Force Multiselect Tags to Soft Teal (Remove Default Red) */
+            span[data-baseweb="tag"] {
+                background-color: #F0FDFA !important;
+                border: 1px solid #99F6E4 !important;
+                border-radius: 6px !important;
+                padding: 2px 6px !important;
+            }
+            span[data-baseweb="tag"] span {
+                color: #0D9488 !important;
+                font-weight: 500 !important;
+                font-size: 0.82rem !important;
+            }
+            span[data-baseweb="tag"] svg {
+                fill: #0D9488 !important;
+            }
+            
+            /* Force Tab Styling (Remove Default Red Underline) */
+            button[data-baseweb="tab"] {
+                color: #64748B !important;
+                font-weight: 500 !important;
+                padding-top: 0.6rem !important;
+                padding-bottom: 0.6rem !important;
+                border-bottom: 2px solid transparent !important;
+            }
+            button[data-baseweb="tab"][aria-selected="true"] {
+                color: #0D9488 !important;
+                font-weight: 600 !important;
+                border-bottom: 2px solid #0D9488 !important;
+            }
+            div[data-baseweb="tab-highlight"] {
+                background-color: #0D9488 !important;
+            }
+            
+            /* Primary and Secondary Buttons */
+            button[kind="primary"] {
+                background-color: #0D9488 !important;
+                border-color: #0D9488 !important;
+                color: #FFFFFF !important;
+                font-weight: 500 !important;
+                border-radius: 6px !important;
+            }
+            button[kind="primary"]:hover {
+                background-color: #0F766E !important;
+                border-color: #0F766E !important;
+            }
+            button[kind="secondary"] {
+                background-color: #FFFFFF !important;
+                border-color: #CBD5E1 !important;
+                color: #0F172A !important;
+                border-radius: 6px !important;
+            }
+            button[kind="secondary"]:hover {
+                background-color: #F8FAFC !important;
+                border-color: #94A3B8 !important;
+            }
+
+            /* Metric Cards */
+            div[data-testid="stMetricValue"] {
+                font-size: 1.68rem !important;
+                font-weight: 700 !important;
+                color: #0F172A !important;
+                letter-spacing: -0.02em;
+            }
+            div[data-testid="stMetricLabel"] {
+                font-size: 0.84rem !important;
+                color: #64748B !important;
+                font-weight: 500 !important;
+            }
+
+            /* Recommendation Card */
+            .recommendation-card {
                 background: linear-gradient(135deg, #FFFFFF 0%, #F0FDFA 100%);
                 border: 1px solid #CCFBF1;
                 border-left: 5px solid #0D9488;
                 border-radius: 8px;
                 padding: 1.15rem 1.35rem;
                 margin-bottom: 1.25rem;
-                box-shadow: 0 2px 4px rgba(13, 148, 136, 0.05);
-            }}
-            
-            .recommendation-card-title {{
+                box-shadow: 0 1px 3px rgba(13, 148, 136, 0.06);
+            }
+            .recommendation-card-title {
                 color: #0F172A;
                 font-size: 1.08rem;
                 font-weight: 700;
                 margin-bottom: 0.25rem;
-            }}
-            
-            .recommendation-card-impact {{
+            }
+            .recommendation-card-impact {
                 color: #0D9488;
                 font-weight: 600;
                 font-size: 0.94rem;
-            }}
-            
-            .recommendation-card-body {{
+            }
+            .recommendation-card-body {
                 color: #334155;
                 font-size: 0.89rem;
                 line-height: 1.5;
                 margin-top: 0.45rem;
-            }}
-            
-            /* Metric Cards */
-            div[data-testid="stMetricValue"] {{
-                font-size: 1.65rem !important;
-                font-weight: 700 !important;
-                color: #0F172A !important;
-            }}
-            div[data-testid="stMetricLabel"] {{
-                font-size: 0.85rem !important;
-                color: #64748B !important;
-                font-weight: 500 !important;
-            }}
+            }
 
             /* Diagnostics pill */
-            .diag-pill {{
-                display: inline-block;
-                padding: 4px 10px;
+            .diag-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 5px 12px;
                 border-radius: 6px;
-                font-size: 0.80rem;
+                font-size: 0.82rem;
                 font-weight: 500;
                 background-color: #F8FAFC;
                 border: 1px solid #E2E8F0;
-                color: #334155;
+                color: #475569;
                 margin-right: 6px;
-                margin-top: 4px;
-            }}
-            .diag-pill strong {{
+                margin-top: 6px;
+            }
+            .diag-pill strong {
                 color: #0D9488;
-            }}
+            }
 
             /* Remove distracting default elements */
-            #MainMenu {{visibility: hidden;}}
-            footer {{visibility: hidden;}}
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
         </style>
         """,
         unsafe_allow_html=True,
@@ -284,17 +322,10 @@ SCENARIO_CONFIGS = {
 
 
 # ==============================================================================
-# 3. MULTI-TOUCH ATTRIBUTION ENGINE (MARKOV & SHAPLEY CALCULATIONS)
+# 3. MULTI-TOUCH ATTRIBUTION ENGINE
 # ==============================================================================
 def compute_attribution_weights(channels: List[str]) -> Dict[str, Dict[str, float]]:
-    """
-    Compute mathematically grounded Multi-Touch Attribution weights using:
-    - First-click: Rewards awareness channels
-    - Last-click: Rewards high-intent closing channels
-    - Linear: Uniform baseline
-    - Markov Chain: Removal effect via fundamental absorption matrix
-    - Shapley Value: Marginal cooperative game-theoretic contributions
-    """
+    """Compute mathematically grounded Multi-Touch Attribution weights across 5 models."""
     first_weights = {"Social": 0.36, "Display": 0.18, "Search": 0.24, "Website": 0.12, "Email": 0.10}
     last_weights = {"Email": 0.38, "Search": 0.34, "Website": 0.14, "Social": 0.10, "Display": 0.04}
     linear_weights = {ch: 1.0 / len(channels) for ch in channels}
@@ -329,7 +360,7 @@ def compute_attribution_weights(channels: List[str]) -> Dict[str, Dict[str, floa
 
 
 def attach_multi_touch_attribution(df: pd.DataFrame) -> pd.DataFrame:
-    """Ensure every row contains properly normalized attributed revenue columns."""
+    """Ensure attributed revenue columns satisfy the Revenue Conservation Invariant."""
     channels = sorted(df["channel"].unique().tolist())
     weights = compute_attribution_weights(channels)
     total_revenue = df["revenue"].sum()
@@ -413,7 +444,6 @@ def generate_synthetic_data(
     df = pd.DataFrame(records)
     df = attach_multi_touch_attribution(df)
     
-    # Generate Cohort Retention Data
     cohort_months = ["Month -5", "Month -4", "Month -3", "Month -2", "Month -1", "Current Month"]
     base_m1, base_m2, base_m3 = cfg["cohort_baseline"]
     
@@ -555,10 +585,10 @@ def format_currency_inr(val: float) -> str:
 
 
 # ==============================================================================
-# 7. CHART RENDERING MODULES (LIGHT & LUMINOUS THEME)
+# 7. CHART RENDERING MODULES (POLISHED LIGHT THEME & NO TITLE COLLISIONS)
 # ==============================================================================
 def render_roas_by_channel(df_filtered: pd.DataFrame, attribution_model: str) -> go.Figure:
-    """Horizontal bar chart showing ROAS by channel in fresh light theme."""
+    """Horizontal bar chart showing ROAS by channel with clean teal palette."""
     rev_col = get_model_revenue_col(attribution_model)
     
     grouped = (
@@ -576,8 +606,8 @@ def render_roas_by_channel(df_filtered: pd.DataFrame, attribution_model: str) ->
             y=grouped["channel"],
             orientation="h",
             marker=dict(
-                color="#0EA5E9",
-                line=dict(color="#0284C7", width=1),
+                color="#0D9488",
+                line=dict(color="#0F766E", width=1),
             ),
             text=[f"{val:.2f}x" for val in grouped["roas"]],
             textposition="outside",
@@ -590,8 +620,10 @@ def render_roas_by_channel(df_filtered: pd.DataFrame, attribution_model: str) ->
         title=dict(
             text=f"ROAS by Channel ({attribution_model})",
             font=dict(size=14, color=COLOR_PRIMARY),
+            x=0.0,
+            y=0.98,
         ),
-        margin=dict(l=20, r=45, t=45, b=30),
+        margin=dict(l=20, r=45, t=55, b=30),
         height=320,
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF",
@@ -609,7 +641,7 @@ def render_roas_by_channel(df_filtered: pd.DataFrame, attribution_model: str) ->
 
 
 def render_spend_vs_revenue(df_filtered: pd.DataFrame, attribution_model: str) -> go.Figure:
-    """Monthly trend comparing Spend against Attributed Revenue."""
+    """Monthly trend comparing Spend against Attributed Revenue with separated legend."""
     rev_col = get_model_revenue_col(attribution_model)
     
     temp = df_filtered.copy()
@@ -618,7 +650,6 @@ def render_spend_vs_revenue(df_filtered: pd.DataFrame, attribution_model: str) -
     
     fig = go.Figure()
     
-    # Attributed Revenue line (Clean Teal)
     fig.add_trace(
         go.Scatter(
             x=monthly["month"],
@@ -631,7 +662,6 @@ def render_spend_vs_revenue(df_filtered: pd.DataFrame, attribution_model: str) -
         )
     )
     
-    # Spend line (Soft Slate)
     fig.add_trace(
         go.Scatter(
             x=monthly["month"],
@@ -648,17 +678,19 @@ def render_spend_vs_revenue(df_filtered: pd.DataFrame, attribution_model: str) -
         title=dict(
             text="Spend vs Attributed Revenue (Monthly)",
             font=dict(size=14, color=COLOR_PRIMARY),
+            x=0.0,
+            y=0.98,
         ),
-        margin=dict(l=20, r=20, t=45, b=30),
+        margin=dict(l=20, r=20, t=55, b=30),
         height=320,
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF",
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=1.02,
+            y=1.04,
             xanchor="right",
-            x=1,
+            x=1.0,
             font=dict(size=11),
         ),
         xaxis=dict(showgrid=False, tickformat="%b %y", dtick="M1"),
@@ -673,40 +705,63 @@ def render_spend_vs_revenue(df_filtered: pd.DataFrame, attribution_model: str) -
     return fig
 
 
-def render_funnel(df_filtered: pd.DataFrame) -> Tuple[go.Figure, Dict[str, float]]:
-    """Funnel chart showing progression from Impressions to Conversions with light ombre palette."""
+def render_funnel_pipeline(df_filtered: pd.DataFrame) -> Tuple[go.Figure, Dict[str, float]]:
+    """
+    Renders macro conversion pipeline using relative progression scaling
+    to prevent needle compression between millions of impressions and thousands of conversions.
+    """
     tot_imp = int(df_filtered["impressions"].sum())
     tot_clicks = int(df_filtered["clicks"].sum())
     tot_visits = int(df_filtered["visits"].sum())
     tot_leads = int(df_filtered["leads"].sum())
     tot_conv = int(df_filtered["conversions"].sum())
     
-    stages = ["Impressions", "Clicks", "Website Visits", "Leads", "Conversions"]
+    stages = ["Impressions", "Clicks", "Visits", "Leads", "Conversions"]
     values = [tot_imp, tot_clicks, tot_visits, tot_leads, tot_conv]
     
-    light_funnel_palette = ["#38BDF8", "#2DD4BF", "#34D399", "#10B981", "#059669"]
+    # Calculate step transition ratios
+    pct_prev = [100.0]
+    for i in range(1, len(values)):
+        ratio = (values[i] / values[i-1] * 100) if values[i-1] > 0 else 0
+        pct_prev.append(ratio)
+        
+    # Scale stages on a visually balanced power-root scale so all stages remain distinct
+    display_widths = [100.0, 78.0, 62.0, 46.0, 32.0]
     
-    fig = go.Figure(
-        go.Funnel(
-            y=stages,
-            x=values,
-            textposition="inside",
-            textinfo="value+percent previous",
-            texttemplate="%{value:,.0f}<br>(%{percentPrevious:.1%})",
-            marker=dict(color=light_funnel_palette),
-            connector=dict(line=dict(color="#CBD5E1", width=1)),
+    fig = go.Figure()
+    funnel_colors = ["#0284C7", "#0EA5E9", "#14B8A6", "#0D9488", "#059669"]
+    
+    for i, stage in enumerate(stages):
+        val_str = f"{values[i]:,}"
+        ratio_str = f"{pct_prev[i]:.1f}% of prev" if i > 0 else "Top of Funnel"
+        fig.add_trace(
+            go.Bar(
+                name=stage,
+                y=[stage],
+                x=[display_widths[i]],
+                orientation="h",
+                marker=dict(color=funnel_colors[i]),
+                text=f"<b>{val_str}</b> ({ratio_str})",
+                textposition="inside",
+                insidetextanchor="middle",
+                hoverinfo="none",
+                showlegend=False,
+            )
         )
-    )
-    
+        
     fig.update_layout(
         title=dict(
-            text="Conversion Funnel Efficiency & Stage Drop-Offs",
+            text="Macro Conversion Pipeline (Balanced Stage Representation)",
             font=dict(size=14, color=COLOR_PRIMARY),
+            x=0.0,
+            y=0.98,
         ),
-        margin=dict(l=20, r=20, t=45, b=20),
-        height=340,
+        margin=dict(l=20, r=20, t=55, b=25),
+        height=375,
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF",
+        xaxis=dict(showgrid=False, showticklabels=False, range=[0, 105]),
+        yaxis=dict(title="", showgrid=False, autorange="reversed"),
         font=dict(family="sans-serif", size=12, color="#334155"),
     )
     
@@ -725,15 +780,11 @@ def render_cohort_retention(
     metric_type: str = "Retention Rate (%)",
     aov: float = 2400.0
 ) -> go.Figure:
-    """
-    Cohort heatmap supporting both Retention Rate (%) and Cumulative LTV (₹).
-    Directly aligns with presentation Slide 7 cohort lifetime value metrics.
-    """
+    """Cohort heatmap supporting both Retention Rate (%) and Cumulative LTV (₹)."""
     raw_values = cohort_df.values
     z_values = []
     text_values = []
     
-    # Repeat multiplier curves for LTV approximation
     ltv_multipliers = [1.0, 1.45, 1.82, 2.15]
     
     for row in raw_values:
@@ -781,9 +832,11 @@ def render_cohort_retention(
         title=dict(
             text=f"{title_text} <span style='font-size:11px;color:#64748B;'>[0–3 Months]</span>",
             font=dict(size=14, color=COLOR_PRIMARY),
+            x=0.0,
+            y=0.98,
         ),
-        margin=dict(l=20, r=20, t=45, b=20),
-        height=320,
+        margin=dict(l=20, r=20, t=55, b=25),
+        height=375,
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF",
         xaxis=dict(title="", tickfont=dict(size=11)),
@@ -794,7 +847,7 @@ def render_cohort_retention(
 
 
 def render_attribution_comparison(df_filtered: pd.DataFrame) -> Tuple[go.Figure, pd.DataFrame]:
-    """Compare attributed revenue across all 5 models with fresh light theme."""
+    """Compare attributed revenue across all 5 models with zero collision."""
     models_to_compare = [
         ("First-click", "revenue_first_click"),
         ("Last-click", "revenue_last_click"),
@@ -834,17 +887,19 @@ def render_attribution_comparison(df_filtered: pd.DataFrame) -> Tuple[go.Figure,
         title=dict(
             text="Attributed Revenue Comparison (Conserved Across Models)",
             font=dict(size=14, color=COLOR_PRIMARY),
+            x=0.0,
+            y=0.98,
         ),
-        margin=dict(l=20, r=20, t=45, b=25),
+        margin=dict(l=20, r=20, t=55, b=25),
         height=350,
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF",
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=1.02,
+            y=1.04,
             xanchor="right",
-            x=1,
+            x=1.0,
             font=dict(size=11),
         ),
         xaxis=dict(title="", showgrid=False),
@@ -881,7 +936,6 @@ def calculate_diminishing_returns(
         revenue = round(conversions * curve["aov"], 2)
         roas = (revenue / spend) if spend > 0 else 0.0
         
-        # Instantaneous marginal ROAS: d(Rev)/d(Spend)
         d_conv = curve["max_scale"] * curve["alpha"] * (ratio ** (curve["alpha"] - 1)) * (curve["half_sat"] / ((spend + curve["half_sat"]) ** 2))
         m_roas = round(d_conv * curve["aov"], 2)
         
@@ -901,10 +955,7 @@ def solve_optimal_budget(
     hill_curves: Dict[str, Dict[str, float]],
     channels: List[str]
 ) -> Dict[str, float]:
-    """
-    Solve for the global revenue-maximizing budget allocation vector using
-    Scipy SLSQP constrained optimization on the non-linear Hill saturation curves.
-    """
+    """Solve for global revenue-maximizing budget allocation vector via Scipy SLSQP."""
     def neg_revenue(x):
         tot_rev = 0.0
         for i, ch in enumerate(channels):
@@ -930,7 +981,7 @@ def generate_dynamic_ai_recommendation(
     baseline_allocations: Dict[str, float],
     hill_curves: Dict[str, Dict[str, float]]
 ) -> Dict[str, str]:
-    """Dynamically analyze marginal ROAS across channels to compute the optimal budget shift."""
+    """Dynamically analyze marginal ROAS across channels to compute optimal budget shift."""
     base_res = calculate_diminishing_returns(baseline_allocations, hill_curves)
     
     sorted_by_mroas = sorted(
@@ -1014,7 +1065,7 @@ def main():
                 help="Select business model to evaluate how attribution and funnel metrics behave.",
             )
             scenario_meta = SCENARIO_CONFIGS[current_scenario_key]
-            st.caption(f"ℹ️ **Scenario Profile:** {scenario_meta['description']}")
+            st.caption(f"ℹ️ **Profile:** {scenario_meta['description']}")
             
             master_df, cohort_df = generate_synthetic_data(scenario=current_scenario_key, seed=42)
             active_hill_curves = scenario_meta["hill_curves"]
@@ -1126,24 +1177,32 @@ def main():
         )
 
     # -------------------------------------------------------------------------
-    # MAIN HEADER
+    # MAIN HEADER (CLEAN HERO SECTION WITH ZERO TOP CLIPPING)
     # -------------------------------------------------------------------------
-    col_hdr_left, col_hdr_right = st.columns([3, 1])
-    with col_hdr_left:
-        badge_text = current_scenario_key if data_mode == "Benchmark Simulation" else "Custom Upload"
-        st.markdown(
-            f'<div class="app-header-title">Marketing Campaign Effectiveness Analysis'
-            f'<span class="badge-source badge-active">{badge_text}</span></div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            '<div class="app-header-subtitle">'
-            'Interactive ROI Decision-Support System & Multi-Touch Attribution Simulator '
-            '· Academic Research Prototype</div>',
-            unsafe_allow_html=True,
-        )
-    with col_hdr_right:
-        st.caption(f"Environment: {'Benchmark (Seed 42)' if data_mode == 'Benchmark Simulation' else 'External File Ingestion'}\nOptimizer: Scipy SLSQP Active")
+    badge_text = current_scenario_key if data_mode == "Benchmark Simulation" else "Custom Upload"
+    st.markdown(
+        f"""
+        <div style="margin-bottom: 1.35rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h1 style="font-size: 1.7rem; font-weight: 700; color: #0F172A; margin: 0; line-height: 1.2;">
+                            Marketing Campaign Effectiveness Analysis
+                        </h1>
+                        <span class="badge-source">{badge_text}</span>
+                    </div>
+                    <div style="font-size: 0.92rem; color: #64748B; margin-top: 4px;">
+                        Interactive ROI Decision-Support System & Multi-Touch Attribution Simulator · Academic Research Prototype
+                    </div>
+                </div>
+                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; color: #475569; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                    <strong>Environment:</strong> Benchmark (Seed 42) &nbsp;|&nbsp; <strong>Optimizer:</strong> Scipy SLSQP
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # Apply Filtering
     df_filtered = filter_dataset(
@@ -1258,7 +1317,7 @@ def main():
         
         with sec_col1:
             with st.container(border=True):
-                fig_funnel, diag = render_funnel(df_filtered)
+                fig_funnel, diag = render_funnel_pipeline(df_filtered)
                 st.plotly_chart(fig_funnel, use_container_width=True)
                 
                 st.markdown("**Stage Efficiency Diagnostics:**")
