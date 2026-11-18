@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Loader2, Check } from "lucide-react";
+import { Eye, EyeOff, Loader2, Check, AlertCircle } from "lucide-react";
+import { authApi } from "@/lib/api";
+import { auth } from "@/lib/auth";
 
 const industries = [
   "E-Commerce (B2C)", "B2B Enterprise SaaS", "EdTech & Professional Courses",
@@ -17,20 +20,43 @@ function slugify(t: string) {
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({ companyName: "", slug: "", industry: "", adminName: "", email: "", password: "" });
 
   const setCompanyName = (v: string) => setForm({ ...form, companyName: v, slug: slugify(v) });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     if (step < 2) { setStep(step + 1); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    window.location.href = `/dashboard/${form.slug}`;
+    try {
+      const res = await authApi.register({
+        company_name: form.companyName,
+        slug: form.slug,
+        industry: form.industry,
+        admin_name: form.adminName,
+        email: form.email,
+        password: form.password,
+      });
+      const data = res.data;
+      auth.setSession({ ...data, user_name: form.adminName });
+      document.cookie = `aiq_token=${data.access_token}; path=/; max-age=3600; SameSite=Lax`;
+      document.cookie = `aiq_company_slug=${form.slug}; path=/; max-age=3600; SameSite=Lax`;
+      router.push(`/dashboard/${form.slug}`);
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
+        "Registration failed. Try a different workspace name.";
+      setError(msg);
+      setStep(0);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,6 +68,11 @@ export default function RegisterPage() {
           <Link href="/auth/login" className="text-primary-600 font-medium hover:underline">Sign in</Link>
         </p>
       </div>
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2 text-sm text-red-700">
+          <AlertCircle className="w-4 h-4 shrink-0" />{error}
+        </div>
+      )}
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 mb-8">
