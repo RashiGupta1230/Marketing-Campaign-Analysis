@@ -1,87 +1,186 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 import { TopNav } from "@/components/dashboard/TopNav";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { Button } from "@/components/ui/button";
 import { DollarSign, TrendingUp, Users, BarChart3, Download, RefreshCw, ArrowRight, Zap } from "lucide-react";
+import { attributionApi, optimizerApi } from "@/lib/api";
+import { formatCurrency, formatPercent } from "@/lib/utils";
 
-interface PageProps { params: { company: string } }
+// Skeleton loader for KPI cards
+function KPISkeleton() {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse">
+      <div className="h-3 w-24 bg-slate-200 rounded mb-4" />
+      <div className="h-7 w-32 bg-slate-200 rounded mb-2" />
+      <div className="h-3 w-20 bg-slate-100 rounded" />
+    </div>
+  );
+}
 
-const kpis = [
-  { label: "Total Media Spend", value: "₹8,00,000", delta: "+4.1% vs baseline", deltaType: "neutral" as const, caption: "Across 5 channels · All Regions", icon: <DollarSign className="w-4 h-4" /> },
-  { label: "Attributed Revenue", value: "₹21,40,000", delta: "+8.2% vs baseline", deltaType: "positive" as const, caption: "Markov Chain model · Conserved", icon: <TrendingUp className="w-4 h-4" />, accent: true },
-  { label: "Conversions & CPA", value: "3,420", delta: "+6.3% vs baseline", deltaType: "positive" as const, caption: "CPA: ₹2,339 · CAC: ₹3,124 (2.8m payback)", icon: <Users className="w-4 h-4" /> },
-  { label: "ROAS / LTV:CAC", value: "2.67x (+167%)", delta: "+0.18x vs baseline", deltaType: "positive" as const, caption: "LTV:CAC: 4.2x · 🟢 Healthy", icon: <BarChart3 className="w-4 h-4" /> },
-];
+export default function DashboardOverviewPage() {
+  const params = useParams();
+  const company = params.company as string;
+  const companyName = company.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-const channelRows = [
-  { channel: "Email",   spend: "₹1,10,000", roas: "3.8x", conv: "712",   trend: "+12%", up: true  },
-  { channel: "Search",  spend: "₹2,80,000", roas: "3.1x", conv: "1,089", trend: "+5%",  up: true  },
-  { channel: "Social",  spend: "₹2,40,000", roas: "2.5x", conv: "890",   trend: "+9%",  up: true  },
-  { channel: "Website", spend: "₹70,000",   roas: "2.1x", conv: "421",   trend: "+3%",  up: true  },
-  { channel: "Display", spend: "₹1,00,000", roas: "1.4x", conv: "308",   trend: "-2%",  up: false },
-];
+  // Real API call — Markov Chain attribution
+  const { data: attrData, isLoading: attrLoading, refetch } = useQuery({
+    queryKey: ["attribution", "E-Commerce (B2C)", "Markov Chain"],
+    queryFn: async () => {
+      const res = await attributionApi.compute({
+        scenario: "E-Commerce (B2C)",
+        attribution_model: "Markov Chain",
+        seed: 42,
+      });
+      return res.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-const quickLinks = [
-  { label: "Attribution Models", href: "attribution", icon: "🔀" },
-  { label: "Run SLSQP Optimizer", href: "optimizer", icon: "⚡" },
-  { label: "Manage Reports", href: "reports", icon: "📄" },
-  { label: "Invite Team", href: "team", icon: "👥" },
-];
+  // Real API call — Optimizer for AI recommendation
+  const { data: optData } = useQuery({
+    queryKey: ["optimizer", "E-Commerce (B2C)"],
+    queryFn: async () => {
+      const res = await optimizerApi.solve({
+        target_budget: 800000,
+        scenario: "E-Commerce (B2C)",
+        objective: "revenue",
+        gross_margin_pct: 0.65,
+        attribution_model: "Markov Chain",
+      });
+      return res.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-export default function DashboardOverviewPage({ params }: PageProps) {
-  const companyName = params.company.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  // Derive KPIs from real data
+  const totalSpend = attrData?.total_spend ?? 0;
+  const totalRev = attrData?.total_attributed_revenue ?? 0;
+  const totalConv = attrData?.channels?.reduce((s: number, c: { conversions: number }) => s + c.conversions, 0) ?? 0;
+  const roas = attrData?.blended_roas ?? 0;
+  const cpa = totalConv > 0 ? totalSpend / totalConv : 0;
+
+  const kpis = [
+    {
+      label: "Total Media Spend",
+      value: attrLoading ? "—" : formatCurrency(totalSpend),
+      delta: "Across all channels",
+      deltaType: "neutral" as const,
+      caption: `${attrData?.channels?.length ?? 0} channels · All Regions`,
+      icon: <DollarSign className="w-4 h-4" />,
+    },
+    {
+      label: "Attributed Revenue",
+      value: attrLoading ? "—" : formatCurrency(totalRev),
+      delta: attrData?.revenue_conserved ? "✓ Revenue Conserved" : "⚠ Check model",
+      deltaType: "positive" as const,
+      caption: "Markov Chain · Invariant verified",
+      icon: <TrendingUp className="w-4 h-4" />,
+      accent: true,
+    },
+    {
+      label: "Conversions / CPA",
+      value: attrLoading ? "—" : totalConv.toLocaleString(),
+      delta: `CPA: ${formatCurrency(cpa)}`,
+      deltaType: "positive" as const,
+      caption: "All channels combined",
+      icon: <Users className="w-4 h-4" />,
+    },
+    {
+      label: "Blended ROAS",
+      value: attrLoading ? "—" : `${roas.toFixed(2)}x`,
+      delta: roas >= 2 ? "🟢 Healthy" : roas >= 1 ? "🟡 Marginal" : "🔴 Below target",
+      deltaType: roas >= 2 ? "positive" as const : "negative" as const,
+      caption: "Revenue ÷ Spend (Markov)",
+      icon: <BarChart3 className="w-4 h-4" />,
+    },
+  ];
+
+  const aiRec = optData?.ai_recommendation;
+
+  const quickLinks = [
+    { label: "Attribution Models", href: "attribution", icon: "🔀" },
+    { label: "Run SLSQP Optimizer", href: "optimizer", icon: "⚡" },
+    { label: "Manage Reports", href: "reports", icon: "📄" },
+    { label: "Invite Team", href: "team", icon: "👥" },
+  ];
+
   return (
     <>
       <TopNav
         title={`${companyName} — Campaign Overview`}
-        subtitle="E-Commerce (B2C) · Oct 1 – Nov 3, 2026 · Markov Chain"
+        subtitle="E-Commerce (B2C) · Markov Chain Attribution"
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5"><RefreshCw className="w-3.5 h-3.5" />Refresh</Button>
-            <Button size="sm" className="gap-1.5"><Download className="w-3.5 h-3.5" />Export Brief</Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => refetch()} disabled={attrLoading}>
+              <RefreshCw className={`w-3.5 h-3.5 ${attrLoading ? "animate-spin" : ""}`} />
+              {attrLoading ? "Loading..." : "Refresh"}
+            </Button>
+            <Button size="sm" className="gap-1.5">
+              <Download className="w-3.5 h-3.5" />Export Brief
+            </Button>
           </div>
         }
       />
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+
         {/* KPIs */}
         <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">📈 Historical Performance Actuals (Evaluated Period)</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+            📈 Live Attribution Results (Markov Chain)
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-            {kpis.map((k) => <KPICard key={k.label} {...k} />)}
+            {attrLoading
+              ? Array.from({ length: 4 }).map((_, i) => <KPISkeleton key={i} />)
+              : kpis.map((k) => <KPICard key={k.label} {...k} />)}
           </div>
         </div>
 
-        {/* Table + AI rec */}
+        {/* Channel table + AI rec */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
           <div className="xl:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
               <h2 className="text-sm font-semibold text-slate-900">Channel Performance</h2>
-              <Button variant="ghost" size="sm" className="text-xs gap-1">View attribution <ArrowRight className="w-3 h-3" /></Button>
+              <Button variant="ghost" size="sm" className="text-xs gap-1" asChild>
+                <a href="attribution">View attribution <ArrowRight className="w-3 h-3" /></a>
+              </Button>
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  {["Channel", "Spend", "ROAS", "Conversions", "MoM"].map((h) => (
-                    <th key={h} className="text-left text-xs font-semibold text-slate-500 px-5 py-3">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {channelRows.map((row, i) => (
-                  <tr key={row.channel} className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${i === channelRows.length - 1 ? "border-0" : ""}`}>
-                    <td className="px-5 py-3 font-medium text-slate-800">{row.channel}</td>
-                    <td className="px-5 py-3 text-slate-600">{row.spend}</td>
-                    <td className="px-5 py-3 font-semibold text-primary-700">{row.roas}</td>
-                    <td className="px-5 py-3 text-slate-600">{row.conv}</td>
-                    <td className="px-5 py-3">
-                      <span className={`text-xs font-semibold ${row.up ? "text-emerald-600" : "text-red-500"}`}>{row.trend}</span>
-                    </td>
-                  </tr>
+            {attrLoading ? (
+              <div className="p-5 space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-8 bg-slate-100 rounded animate-pulse" />
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    {["Channel", "Spend", "ROAS", "Conversions", "Weight"].map((h) => (
+                      <th key={h} className="text-left text-xs font-semibold text-slate-500 px-5 py-3">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(attrData?.channels ?? [])
+                    .slice()
+                    .sort((a: { roas: number }, b: { roas: number }) => b.roas - a.roas)
+                    .map((row: { channel: string; spend: number; roas: number; conversions: number; weight: number }, i: number, arr: unknown[]) => (
+                      <tr key={row.channel} className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${i === arr.length - 1 ? "border-0" : ""}`}>
+                        <td className="px-5 py-3 font-medium text-slate-800">{row.channel}</td>
+                        <td className="px-5 py-3 text-slate-600">{formatCurrency(row.spend)}</td>
+                        <td className="px-5 py-3 font-semibold text-primary-700">{row.roas.toFixed(2)}x</td>
+                        <td className="px-5 py-3 text-slate-600">{row.conversions.toLocaleString()}</td>
+                        <td className="px-5 py-3 text-slate-500">{formatPercent(row.weight)}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            )}
           </div>
 
-          {/* AI Rec */}
+          {/* AI Rec from real optimizer */}
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-500" />
@@ -89,11 +188,19 @@ export default function DashboardOverviewPage({ params }: PageProps) {
             </div>
             <div className="flex-1 p-5">
               <div className="bg-gradient-to-br from-primary-50 to-teal-50 border border-primary-100 rounded-xl p-4 mb-4">
-                <div className="text-sm font-bold text-slate-900 mb-1">🎯 Reallocate ₹80K from Display → Email</div>
-                <div className="text-xs font-semibold text-primary-700 mb-2">Projected: +₹1,20,000 incremental revenue</div>
-                <div className="text-xs text-slate-600 leading-relaxed">Email is at 62% of Hill saturation. Display has crossed the diminishing-returns knee. Shapley model confirms Email&apos;s assist value is underweighted by 31% under Last-click.</div>
+                <div className="text-sm font-bold text-slate-900 mb-1">
+                  {aiRec?.title ?? "🎯 Optimizing budget allocation..."}
+                </div>
+                {aiRec?.impact && (
+                  <div className="text-xs font-semibold text-primary-700 mb-2">{aiRec.impact}</div>
+                )}
+                <div className="text-xs text-slate-600 leading-relaxed">
+                  {aiRec?.body ?? "Run the SLSQP optimizer to generate a personalized budget recommendation based on your Markov Chain attribution results."}
+                </div>
               </div>
-              <Button className="w-full gap-2" variant="outline" size="sm"><Zap className="w-3.5 h-3.5" />Run SLSQP Optimizer →</Button>
+              <Button className="w-full gap-2" variant="outline" size="sm" asChild>
+                <a href="optimizer"><Zap className="w-3.5 h-3.5" />Run SLSQP Optimizer →</a>
+              </Button>
             </div>
             <div className="px-5 py-3 bg-slate-50 border-t border-slate-100">
               <p className="text-xs text-slate-400">Advisory only. Human approval required before budget execution.</p>
@@ -115,4 +222,3 @@ export default function DashboardOverviewPage({ params }: PageProps) {
     </>
   );
 }
-

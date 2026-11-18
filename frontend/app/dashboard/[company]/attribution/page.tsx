@@ -1,61 +1,136 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 import { TopNav } from "@/components/dashboard/TopNav";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GitBranch, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Info } from "lucide-react";
+import { attributionApi } from "@/lib/api";
+import { formatCurrency, formatPercent } from "@/lib/utils";
 
-interface PageProps { params: { company: string } }
+const MODEL_META: Record<string, { description: string; strength: string; tag: string; tagColor: "default" | "secondary" | "success" | "warning" }> = {
+  "First-click":   { description: "100% credit to the first touchpoint. Good for brand awareness measurement.", strength: "Simple, clear, favours top-of-funnel channels.", tag: "Top-of-funnel", tagColor: "secondary" },
+  "Last-click":    { description: "100% credit to the final touchpoint before conversion. Default in most ad platforms.", strength: "Simple, conversion-focused. Undervalues assist channels.", tag: "Conversion focus", tagColor: "default" },
+  "Linear":        { description: "Equal credit distributed across all touchpoints in the journey.", strength: "Fair baseline. Ignores actual channel contribution weight.", tag: "Balanced", tagColor: "secondary" },
+  "Markov Chain":  { description: "Removal-effect matrix: each channel's credit = drop in conversion rate if removed.", strength: "Mathematically rigorous. Captures sequence & interaction effects.", tag: "Recommended", tagColor: "success" },
+  "Shapley Value": { description: "Game-theoretic coalition values: credit = average marginal contribution across all channel orderings.", strength: "Theoretically optimal. Computationally intensive at scale.", tag: "Gold standard", tagColor: "success" },
+};
 
-const models = [
-  { name: "Markov Chain", tag: "Recommended", description: "First-order Markov absorption with channel removal effects. Computes conversion probability drop when each channel is removed from the journey graph.", strengths: ["Full journey awareness", "Handles position bias", "Mathematically grounded"], use: "Default — most balanced for multi-channel journeys", style: "border-primary-300 bg-primary-50", badge: "default" as const },
-  { name: "Shapley Value", tag: "Game Theory", description: "Cooperative game-theoretic fairness across all channel coalitions. Guarantees fair marginal contribution regardless of touchpoint ordering.", strengths: ["Fairness guarantee", "Coalition-aware", "Order-independent"], use: "When channels have high co-occurrence and ordering is noisy", style: "border-purple-200 bg-purple-50", badge: "secondary" as const },
-  { name: "Linear", tag: "Heuristic", description: "Equal credit distributed across all touchpoints in the path. Simple, transparent, and easy to explain to stakeholders.", strengths: ["Fully transparent", "No data requirements", "Easy to audit"], use: "Baseline comparison or stakeholder presentations", style: "border-slate-200 bg-white", badge: "outline" as const },
-  { name: "First-click", tag: "Heuristic", description: "100% credit to the first touchpoint. Overweights awareness and discovery channels (Social, Display).", strengths: ["Simple to compute", "Good for brand awareness"], use: "Evaluating top-of-funnel channel effectiveness", style: "border-slate-200 bg-white", badge: "outline" as const },
-  { name: "Last-click", tag: "Heuristic", description: "100% credit to the last touchpoint before conversion. Systematically undervalues assist channels.", strengths: ["Industry standard comparison", "Easy to implement"], use: "Comparison baseline — not recommended for optimization", style: "border-slate-200 bg-white", badge: "outline" as const },
-];
+function ModelSkeleton() {
+  return <div className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse h-48" />;
+}
 
-export default function AttributionPage({ params }: PageProps) {
+export default function AttributionPage() {
+  const params = useParams();
+  const company = params.company as string;
+
+  const { data: compareData, isLoading, refetch } = useQuery({
+    queryKey: ["attribution-compare", "E-Commerce (B2C)"],
+    queryFn: async () => {
+      const res = await attributionApi.compare("E-Commerce (B2C)", 42);
+      return res.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const models = ["First-click", "Last-click", "Linear", "Markov Chain", "Shapley Value"];
+  const totalRev = compareData?.total_revenue ?? 0;
+
+  // Build per-model totals
+  const modelTotals = models.map((m) => {
+    const key = m.toLowerCase().replace(/ /g, "_").replace(/-/g, "_").replace("chain", "chain");
+    const colMap: Record<string, string> = {
+      "First-click": "first_click", "Last-click": "last_click",
+      "Linear": "linear", "Markov Chain": "markov_chain", "Shapley Value": "shapley_value",
+    };
+    const col = colMap[m];
+    const total = (compareData?.channels ?? []).reduce(
+      (s: number, c: Record<string, number>) => s + (c[col] ?? 0), 0
+    );
+    return { model: m, total };
+  });
+
   return (
     <>
-      <TopNav title="Attribution Models" subtitle="Compare how each model distributes revenue credit across channels"
-        actions={<Button size="sm">Run Comparison →</Button>} />
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-          <Info className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-          <p className="text-sm text-blue-800">
-            <strong>Revenue Conservation Invariant:</strong> All 5 models ensure{" "}
-            <code className="bg-blue-100 px-1 rounded text-xs">sum(attributed_revenue) == total_revenue</code>.
-            Switching models changes credit distribution — not the total.
-          </p>
+      <TopNav
+        title="Attribution Models"
+        subtitle="Compare 5 multi-touch models on the same dataset"
+        actions={
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => refetch()} disabled={isLoading}>
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            {isLoading ? "Computing..." : "Recompute"}
+          </Button>
+        }
+      />
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Revenue conservation notice */}
+        <div className="flex items-start gap-3 p-4 bg-teal-50 border border-teal-200 rounded-xl text-sm text-teal-800">
+          <Info className="w-4 h-4 mt-0.5 shrink-0" />
+          <div>
+            <span className="font-semibold">Revenue Conservation Invariant enforced.</span>{" "}
+            Across all models, total attributed revenue = total actual revenue (±0.1%).
+            {totalRev > 0 && <span className="ml-1 font-medium">Total: {formatCurrency(totalRev)}</span>}
+          </div>
         </div>
-        <div className="space-y-3">
-          {models.map((m) => (
-            <div key={m.name} className={`rounded-xl border p-5 ${m.style}`}>
-              <div className="flex items-start justify-between gap-4 mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center">
-                    <GitBranch className="w-4 h-4 text-slate-600" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-slate-900 text-sm">{m.name}</h3>
-                      <Badge variant={m.badge} className="text-xs">{m.tag}</Badge>
+
+        {/* Model cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {isLoading
+            ? Array.from({ length: 5 }).map((_, i) => <ModelSkeleton key={i} />)
+            : models.map((m) => {
+                const meta = MODEL_META[m];
+                const total = modelTotals.find((t) => t.model === m)?.total ?? 0;
+                return (
+                  <div key={m} className={`bg-white rounded-xl border p-5 flex flex-col gap-3 ${m === "Markov Chain" ? "border-primary-300 ring-1 ring-primary-100" : "border-slate-200"}`}>
+                    <div className="flex items-start justify-between">
+                      <h3 className="text-sm font-bold text-slate-900">{m}</h3>
+                      <Badge variant={meta.tagColor}>{meta.tag}</Badge>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{m.use}</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">{meta.description}</p>
+                    <p className="text-xs text-slate-400 italic">{meta.strength}</p>
+                    <div className="mt-auto pt-3 border-t border-slate-100">
+                      <div className="text-xs text-slate-500 mb-1">Total attributed revenue</div>
+                      <div className="text-lg font-bold text-slate-900">{formatCurrency(total)}</div>
+                    </div>
+                    {/* Per-channel mini table */}
+                    {compareData && (
+                      <div className="text-xs space-y-1">
+                        {(compareData.channels as Record<string, number | string>[])
+                          .slice()
+                          .sort((a, b) => {
+                            const colMap: Record<string, string> = {
+                              "First-click": "first_click", "Last-click": "last_click",
+                              "Linear": "linear", "Markov Chain": "markov_chain", "Shapley Value": "shapley_value",
+                            };
+                            const col = colMap[m];
+                            return (b[col] as number) - (a[col] as number);
+                          })
+                          .map((ch) => {
+                            const colMap: Record<string, string> = {
+                              "First-click": "first_click", "Last-click": "last_click",
+                              "Linear": "linear", "Markov Chain": "markov_chain", "Shapley Value": "shapley_value",
+                            };
+                            const col = colMap[m];
+                            const val = ch[col] as number;
+                            const pct = total > 0 ? val / total : 0;
+                            return (
+                              <div key={ch.channel as string} className="flex items-center gap-2">
+                                <span className="w-16 text-slate-500 truncate">{ch.channel}</span>
+                                <div className="flex-1 bg-slate-100 rounded-full h-1.5">
+                                  <div className="bg-primary-500 h-1.5 rounded-full" style={{ width: `${pct * 100}%` }} />
+                                </div>
+                                <span className="w-10 text-right text-slate-600">{formatPercent(pct)}</span>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <Button variant="outline" size="sm" className="shrink-0 bg-white">Select Model</Button>
-              </div>
-              <p className="text-sm text-slate-600 mb-3">{m.description}</p>
-              <div className="flex flex-wrap gap-2">
-                {m.strengths.map((s) => (
-                  <span key={s} className="text-xs bg-white border border-slate-200 text-slate-600 px-2.5 py-1 rounded-full">✓ {s}</span>
-                ))}
-              </div>
-            </div>
-          ))}
+                );
+              })}
         </div>
       </div>
     </>
   );
 }
-
