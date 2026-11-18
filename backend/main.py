@@ -4,8 +4,13 @@ Run: python start.py   OR   uvicorn main:app --reload --port 8000
 """
 import sys, os, logging
 
-# Add project root to path so routers can import models/, data/, core/, views/
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+# Add backend directory and project root to sys.path
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(backend_dir)
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

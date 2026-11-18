@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { auth } from "@/lib/auth";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
@@ -139,5 +139,13 @@ export default function LoginPage() {
         <Link href="#" className="underline">Privacy Policy</Link>.
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="w-full max-w-[400px] text-center text-slate-400 py-12">Loading login form...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

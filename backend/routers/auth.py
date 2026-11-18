@@ -9,7 +9,6 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status
 from jose import jwt
-from passlib.context import CryptContext
 from pydantic import BaseModel, EmailStr
 
 logger = logging.getLogger(__name__)
@@ -19,16 +18,17 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-production-do-not-use
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
-# bcrypt context — secure password hashing with automatic salting
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+import bcrypt
 
 def _hash_password(plain: str) -> str:
-    return pwd_context.hash(plain)
+    return bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def _verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
 
 
 def _create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
