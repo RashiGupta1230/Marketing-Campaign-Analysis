@@ -60,6 +60,14 @@ from views.charts import (
     render_spend_vs_revenue,
 )
 
+
+# FIX G-01 / S-03: Cache synthetic data generation so it only re-runs when
+# scenario or seed actually changes — not on every widget interaction.
+@st.cache_data(show_spinner=False)
+def _cached_generate_synthetic_data(scenario: str, seed: int = 42):
+    return generate_synthetic_data(scenario=scenario, seed=seed)
+
+
 # Application Page Setup
 st.set_page_config(
     page_title="Marketing Campaign Effectiveness Analysis — Interactive ROI Decision-Support System",
@@ -143,6 +151,9 @@ def main():
         )
 
         current_scenario_key = "E-Commerce (B2C)"
+        # FIX S-01: Default value defined before the if-branch so references
+        # outside the branch never raise NameError regardless of data_mode.
+        scenario_meta = SCENARIO_CONFIGS["E-Commerce (B2C)"]
 
         if data_mode == "Benchmark Simulation":
             current_scenario_key = st.selectbox(
@@ -154,7 +165,7 @@ def main():
             scenario_meta = SCENARIO_CONFIGS[current_scenario_key]
             st.caption(f"ℹ️ **Profile:** {scenario_meta['description']}")
 
-            master_df, cohort_df = generate_synthetic_data(scenario=current_scenario_key, seed=42)
+            master_df, cohort_df = _cached_generate_synthetic_data(scenario=current_scenario_key, seed=42)
             active_hill_curves = scenario_meta["hill_curves"]
             target_budget = scenario_meta["target_budget"]
             baseline_allocations = scenario_meta["default_allocations"].copy()
@@ -196,7 +207,7 @@ def main():
                 parsed_df, err_msg = validate_and_sanitize_csv(uploaded_file)
                 if err_msg:
                     st.error(f"❌ {err_msg}")
-                    master_df, cohort_df = generate_synthetic_data(scenario="E-Commerce (B2C)", seed=42)
+                    master_df, cohort_df = _cached_generate_synthetic_data(scenario="E-Commerce (B2C)", seed=42)
                 else:
                     is_event_dataset = getattr(parsed_df, "attrs", {}).get("is_event_level", False)
                     if is_event_dataset:
@@ -205,10 +216,10 @@ def main():
                     else:
                         st.info("ℹ️ Aggregated daily CSV detected. Touchpoint journeys are probabilistically simulated from channel volume. For direct empirical MTA, upload a touchpoint log.")
                     master_df = parsed_df
-                    _, cohort_df = generate_synthetic_data(scenario="E-Commerce (B2C)", seed=42)
+                    _, cohort_df = _cached_generate_synthetic_data(scenario="E-Commerce (B2C)", seed=42)
             else:
                 st.info("Showing default sample benchmark until you upload a CSV.")
-                master_df, cohort_df = generate_synthetic_data(scenario="E-Commerce (B2C)", seed=42)
+                master_df, cohort_df = _cached_generate_synthetic_data(scenario="E-Commerce (B2C)", seed=42)
 
             target_budget = int(master_df["spend"].sum()) if not master_df.empty else 800000
             active_hill_curves = SCENARIO_CONFIGS["E-Commerce (B2C)"]["hill_curves"]
