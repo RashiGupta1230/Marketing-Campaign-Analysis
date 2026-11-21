@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { TopNav } from "@/components/dashboard/TopNav";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { Button } from "@/components/ui/button";
-import { DollarSign, TrendingUp, Users, BarChart3, Download, RefreshCw, ArrowRight, Zap } from "lucide-react";
+import { DollarSign, TrendingUp, Users, BarChart3, Download, RefreshCw, ArrowRight, Zap, Sparkles } from "lucide-react";
 import { attributionApi, optimizerApi } from "@/lib/api";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
@@ -124,12 +124,12 @@ export default function DashboardOverviewPage() {
           </div>
         }
       />
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50">
 
         {/* KPIs */}
         <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-            📈 Live Attribution Results (Markov Chain)
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+            📈 Live Performance Actuals (Markov Chain)
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {attrLoading
@@ -140,10 +140,10 @@ export default function DashboardOverviewPage() {
 
         {/* Channel table + AI rec */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-          <div className="xl:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="xl:col-span-2 bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-semibold text-slate-900">Channel Performance</h2>
-              <Button variant="ghost" size="sm" className="text-xs gap-1" asChild>
+              <h2 className="text-sm font-bold text-slate-900 tracking-tight">Channel Performance</h2>
+              <Button variant="ghost" size="sm" className="text-xs gap-1 text-blue-600 hover:text-blue-700" asChild>
                 <a href="attribution">View attribution <ArrowRight className="w-3 h-3" /></a>
               </Button>
             </div>
@@ -156,9 +156,9 @@ export default function DashboardOverviewPage() {
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-100">
+                  <tr className="bg-slate-50/70 border-b border-slate-100">
                     {["Channel", "Spend", "ROAS", "Conversions", "Weight"].map((h) => (
-                      <th key={h} className="text-left text-xs font-semibold text-slate-500 px-5 py-3">{h}</th>
+                      <th key={h} className="text-left text-xs font-bold text-slate-500 px-5 py-3 uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -167,12 +167,12 @@ export default function DashboardOverviewPage() {
                     .slice()
                     .sort((a: { roas: number }, b: { roas: number }) => b.roas - a.roas)
                     .map((row: { channel: string; spend: number; roas: number; conversions: number; weight: number }, i: number, arr: unknown[]) => (
-                      <tr key={row.channel} className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${i === arr.length - 1 ? "border-0" : ""}`}>
-                        <td className="px-5 py-3 font-medium text-slate-800">{row.channel}</td>
-                        <td className="px-5 py-3 text-slate-600">{formatCurrency(row.spend)}</td>
-                        <td className="px-5 py-3 font-semibold text-primary-700">{row.roas.toFixed(2)}x</td>
-                        <td className="px-5 py-3 text-slate-600">{row.conversions.toLocaleString()}</td>
-                        <td className="px-5 py-3 text-slate-500">{formatPercent(row.weight)}</td>
+                      <tr key={row.channel} className={`border-b border-slate-50 hover:bg-slate-50/80 transition-colors ${i === arr.length - 1 ? "border-0" : ""}`}>
+                        <td className="px-5 py-3.5 font-semibold text-slate-900">{row.channel}</td>
+                        <td className="px-5 py-3.5 text-slate-600 font-medium">{formatCurrency(row.spend)}</td>
+                        <td className="px-5 py-3.5 font-bold text-blue-600">{row.roas.toFixed(2)}x</td>
+                        <td className="px-5 py-3.5 text-slate-600 font-medium">{row.conversions.toLocaleString()}</td>
+                        <td className="px-5 py-3.5 text-slate-500 font-medium">{formatPercent(row.weight)}</td>
                       </tr>
                     ))}
                 </tbody>
@@ -180,30 +180,31 @@ export default function DashboardOverviewPage() {
             )}
           </div>
 
-          {/* AI Rec from real optimizer */}
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
+          {/* AI Rec in Navy & Accent Blue */}
+          <div className="bg-white rounded-xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-500" />
-              <h2 className="text-sm font-semibold text-slate-900">AI Recommendation</h2>
+              <Zap className="w-4 h-4 text-blue-600" />
+              <h2 className="text-sm font-bold text-slate-900 tracking-tight">AI Allocation Advice</h2>
             </div>
             <div className="flex-1 p-5">
-              <div className="bg-gradient-to-br from-primary-50 to-teal-50 border border-primary-100 rounded-xl p-4 mb-4">
-                <div className="text-sm font-bold text-slate-900 mb-1">
-                  {aiRec?.title ?? "🎯 Optimizing budget allocation..."}
+              <div className="bg-gradient-to-br from-blue-50/80 via-slate-50 to-indigo-50/50 border border-blue-200/80 rounded-xl p-4 mb-4 shadow-sm">
+                <div className="text-sm font-extrabold text-slate-900 mb-1 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  {aiRec?.title ?? "Optimizing budget allocation..."}
                 </div>
                 {aiRec?.impact && (
-                  <div className="text-xs font-semibold text-primary-700 mb-2">{aiRec.impact}</div>
+                  <div className="text-xs font-bold text-blue-700 mb-2">{aiRec.impact}</div>
                 )}
-                <div className="text-xs text-slate-600 leading-relaxed">
-                  {aiRec?.body ?? "Run the SLSQP optimizer to generate a personalized budget recommendation based on your Markov Chain attribution results."}
+                <div className="text-xs text-slate-600 leading-relaxed font-normal">
+                  {aiRec?.body ?? "Run the SLSQP optimizer to compute optimal Hill curve saturation levels based on Markov Chain attribution."}
                 </div>
               </div>
-              <Button className="w-full gap-2" variant="outline" size="sm" asChild>
+              <Button className="w-full gap-2 shadow-sm font-bold" size="sm" asChild>
                 <a href="optimizer"><Zap className="w-3.5 h-3.5" />Run SLSQP Optimizer →</a>
               </Button>
             </div>
             <div className="px-5 py-3 bg-slate-50 border-t border-slate-100">
-              <p className="text-xs text-slate-400">Advisory only. Human approval required before budget execution.</p>
+              <p className="text-[11px] text-slate-400">Governance note: Human sign-off required prior to budget execution.</p>
             </div>
           </div>
         </div>
@@ -212,9 +213,9 @@ export default function DashboardOverviewPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {quickLinks.map((card) => (
             <a key={card.label} href={card.href}
-              className="bg-white rounded-xl border border-slate-200 p-4 hover:border-primary-300 hover:shadow-sm transition-all group">
+              className="bg-white rounded-xl border border-slate-200/80 p-4 hover:border-blue-300 hover:shadow-card-hover hover:-translate-y-0.5 transition-all group">
               <div className="text-2xl mb-2">{card.icon}</div>
-              <div className="text-xs font-medium text-slate-700 group-hover:text-primary-700 transition-colors">{card.label}</div>
+              <div className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{card.label}</div>
             </a>
           ))}
         </div>
